@@ -1,18 +1,23 @@
-FROM ubuntu:18.04
-ENV exeport 1111
-ENV gdbport 2222
+# executable listen on: 1111
+# gdbserver  listen on: 2222
 
-RUN sed -i 's/archive\.ubuntu/tw\.archive\.ubuntu/' /etc/apt/sources.list && \
-        apt-get update && \
-        apt-get install -y gdbserver socat
+FROM ubuntu:18.04
+# FROM ubuntu:16.04
 
 WORKDIR /root
 ADD . .
-EXPOSE $gdbport $exeport
+
+RUN \
+    sed -ir "s/archive.ubuntu.com/tw.archive.ubuntu.com/g" /etc/apt/sources.list && \
+    sed -ir "s/security.ubuntu.com/tw.archive.ubuntu.com/g" /etc/apt/sources.list && \
+    sed -ir "s/# deb-src/deb-src/g" /etc/apt/sources.list && \
+    apt-get update && \
+    apt-get install -y gdbserver socat libc6-dbg && \
+    true
 
 # debug mode
 # Note: debugger cannot attach to spawned shell
-# CMD ["socat", "TCP-LISTEN:1111,fork,reuseaddr", "EXEC:gdbserver \\:2222 ./a.out"]
+CMD ["socat", "TCP-LISTEN:1111,fork,reuseaddr", "EXEC:gdbserver --no-disable-randomization \\:2222 ./a.out"]
 
-CMD ["socat", "TCP-LISTEN:1111,fork,reuseaddr", "EXEC:./a.out"]
+# CMD ["socat", "TCP-LISTEN:1111,fork,reuseaddr", "EXEC:./a.out"]
 
